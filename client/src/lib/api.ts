@@ -1,86 +1,39 @@
-export type StoryType =
-  | "romance"
-  | "horror"
-  | "adventure"
-  | "history_learning"
-  | "mystery"
-  | "sci_fi"
-  | "fantasy"
-  | "sleep"
-  | "dystopia"
-  | "alt_history"
-  | "folklore"
-  | "cozy_mystery"
-  | "space_opera"
-  | "philosophy"
-  | "survival";
+import type { GenerateJobPayload, IngestJobPayload, JobListItem, JobsOverview, ProjectsTree, ProjectDetails } from "../types";
 
-export type JobStatus = "queued" | "running" | "saving" | "done" | "error" | "canceled";
+const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8000";
 
-export type GenerateJobPayload = {
-  story_type: StoryType;
-  target_minutes: number;
-  history_topic?: string;
-};
-
-export type JobListItem = {
-  id: string;
-  status: JobStatus;
-  progress: number;
-  message: string;
-  resultPath?: string;
-  error?: string;
-  createdAt: number;
-  updatedAt: number;
-  story_type?: StoryType;
-  target_minutes?: number;
-  history_topic?: string;
-  queue_index?: number;
-};
-
-export type JobsOverview = {
-  jobs: JobListItem[];
-  running: number;
-  queued: number;
-  maxConcurrency: number;
-};
-
-export type ProjectsTree = Record<
-  string,
-  {
-    name: string;
-    items: { file: string; title: string; savedAt: number; minutes?: number; words?: number }[];
-  }
->;
-
-const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, options);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
 export async function createJob(payload: GenerateJobPayload): Promise<{ id: string }> {
-  const res = await fetch(`${BASE}/jobs`, {
+  return request("/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+}
+
+export async function createIngestJob(payload: IngestJobPayload): Promise<{ id: string }> {
+  return request("/ingest", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getJob(id: string): Promise<JobListItem> {
-  const res = await fetch(`${BASE}/jobs/${id}`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return request(`/jobs/${id}`);
 }
 
 export async function listJobs(): Promise<JobsOverview> {
-  const res = await fetch(`${BASE}/jobs`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return request("/jobs");
 }
 
 export async function deleteJob(id: string): Promise<{ ok: true }> {
-  const res = await fetch(`${BASE}/jobs/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return request(`/jobs/${id}`, { method: "DELETE" });
 }
 
 export function streamJob(id: string, onEvent: (state: JobListItem) => void): () => void {
@@ -89,12 +42,11 @@ export function streamJob(id: string, onEvent: (state: JobListItem) => void): ()
 
   const startPolling = () => {
     if (pollTimer) return;
-    onEvent({ id, status: "running", progress: 15, message: "Preparing…", createdAt: Date.now(), updatedAt: Date.now() });
     pollTimer = window.setInterval(async () => {
       try {
         const s = await getJob(id);
         onEvent(s);
-        if (s.status === "done" || s.status === "error" || s.status === "canceled") {
+        if (["done", "error", "canceled"].includes(s.status)) {
           if (pollTimer) window.clearInterval(pollTimer);
           pollTimer = null;
         }
@@ -109,7 +61,7 @@ export function streamJob(id: string, onEvent: (state: JobListItem) => void): ()
       try {
         const state = JSON.parse(evt.data) as JobListItem;
         onEvent(state);
-        if (state.status === "done" || state.status === "error" || state.status === "canceled") {
+        if (["done", "error", "canceled"].includes(state.status)) {
           es?.close();
           if (pollTimer) {
             window.clearInterval(pollTimer);
@@ -137,24 +89,21 @@ export function streamJob(id: string, onEvent: (state: JobListItem) => void): ()
 }
 
 export async function listProjectsTree(): Promise<{ tree: ProjectsTree }> {
-  const res = await fetch(`${BASE}/projects`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return request("/projects");
 }
 
-export async function loadProject(category: string, file: string): Promise<any> {
-  const res = await fetch(
-    `${BASE}/project?category=${encodeURIComponent(category)}&file=${encodeURIComponent(file)}`
-  );
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+export async function loadProject(category: string, file: string): Promise<ProjectDetails> {
+  const params = new URLSearchParams({ category, file });
+  return request(`/project?${params}`);
 }
 
 export async function deleteProject(category: string, file: string): Promise<{ ok: true }> {
-  const res = await fetch(
-    `${BASE}/project?category=${encodeURIComponent(category)}&file=${encodeURIComponent(file)}`,
-    { method: "DELETE" }
-  );
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const params = new URLSearchParams({ category, file });
+  return request(`/project?${params}`, { method: "DELETE" });
+}
+
+export async function getNextTopic(subject: string): Promise<{ topic?: string }> {
+  const params = new URLSearchParams({ subject });
+  const data = await request<{ topic: string }>(`/topics/next?${params}`);
+  return { topic: data.topic };
 }

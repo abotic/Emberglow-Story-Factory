@@ -4,6 +4,6 @@ export function coerceLastJsonBlock(text: string): any {
   try {
     return JSON.parse(match[0]);
   } catch (e) {
-    throw new Error("JSON parse error: " + (e as Error).message);
+    throw new Error(`JSON parse error: ${(e as Error).message}`);
   }
 }

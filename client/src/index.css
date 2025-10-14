@@ -2,4 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
+:root {
+  color-scheme: light;
+}
+
+@layer utilities {
+  .hyphens-auto {
+    hyphens: auto;
+  }
+}

@@ -12,10 +12,13 @@ async function listTree() {
       items: { file: string; title: string; savedAt: number; minutes?: number; words?: number }[];
     }
   > = {};
+
   try {
     const cats = await fs.readdir(ROOT, { withFileTypes: true });
+
     for (const dirent of cats) {
       if (!dirent.isDirectory()) continue;
+
       const cat = dirent.name;
       const files = await fs.readdir(path.join(ROOT, cat));
       const entries: {
@@ -25,6 +28,7 @@ async function listTree() {
         minutes?: number;
         words?: number;
       }[] = [];
+
       for (const f of files.filter((f) => f.endsWith(".json") && !f.endsWith(".log.json"))) {
         try {
           const p = path.join(ROOT, cat, f);
@@ -38,12 +42,14 @@ async function listTree() {
             minutes: j?.meta?.target_minutes,
             words: j?.meta?.estimated_word_count,
           });
-        } catch {}
+        } catch { }
       }
+
       entries.sort((a, b) => b.savedAt - a.savedAt);
       out[cat] = { name: cat, items: entries };
     }
-  } catch {}
+  } catch { }
+
   return out;
 }
 
@@ -52,44 +58,35 @@ export async function registerProjectRoutes(app: FastifyInstance) {
     return { tree: await listTree() };
   });
 
-  app.get(
-    "/project",
-    async (
-      req: FastifyRequest<{ Querystring: { category?: string; file?: string } }>,
-      reply
-    ) => {
-      const { category, file } = req.query || {};
-      if (!category || !file) return reply.code(400).send({ error: "category and file required" });
-      const p = path.join(ROOT, category, file);
-      try {
-        const raw = await fs.readFile(p, "utf8");
-        return JSON.parse(raw);
-      } catch {
-        return reply.code(404).send({ error: "Not found" });
-      }
-    }
-  );
+  app.get("/project", async (req: FastifyRequest<{ Querystring: { category?: string; file?: string } }>, reply) => {
+    const { category, file } = req.query || {};
+    if (!category || !file) return reply.code(400).send({ error: "category and file required" });
 
-  app.delete(
-    "/project",
-    async (
-      req: FastifyRequest<{ Querystring: { category?: string; file?: string } }>,
-      reply
-    ) => {
-      const { category, file } = req.query || {};
-      if (!category || !file) return reply.code(400).send({ error: "category and file required" });
-      const base = file.replace(/\.json$/i, "");
-      const p = path.join(ROOT, category, `${base}.json`);
-      const log = path.join(ROOT, category, `${base}.log.json`);
-      try {
-        await fs.unlink(p);
-        try {
-          await fs.unlink(log);
-        } catch {}
-        return { ok: true };
-      } catch {
-        return reply.code(404).send({ error: "Not found" });
-      }
+    const p = path.join(ROOT, category, file);
+    try {
+      const raw = await fs.readFile(p, "utf8");
+      return JSON.parse(raw);
+    } catch {
+      return reply.code(404).send({ error: "Not found" });
     }
-  );
+  });
+
+  app.delete("/project", async (req: FastifyRequest<{ Querystring: { category?: string; file?: string } }>, reply) => {
+    const { category, file } = req.query || {};
+    if (!category || !file) return reply.code(400).send({ error: "category and file required" });
+
+    const base = file.replace(/\.json$/i, "");
+    const p = path.join(ROOT, category, `${base}.json`);
+    const log = path.join(ROOT, category, `${base}.log.json`);
+
+    try {
+      await fs.unlink(p);
+      try {
+        await fs.unlink(log);
+      } catch { }
+      return { ok: true };
+    } catch {
+      return reply.code(404).send({ error: "Not found" });
+    }
+  });
 }

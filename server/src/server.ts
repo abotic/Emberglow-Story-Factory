@@ -1,8 +1,9 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { env } from "./env.js";
+import { env } from "./config/env.js";
 import { registerProjectRoutes } from "./routes/projects.js";
-import { registerJobRoutes } from "./jobs.js";
+import { registerTopicRoutes } from "./routes/topics.js";
+import { registerJobRoutes } from "./routes/jobs.js";
 
 const app = Fastify({ logger: false });
 
@@ -14,6 +15,7 @@ await app.register(cors, {
 
 await registerProjectRoutes(app);
 await registerJobRoutes(app);
+await registerTopicRoutes(app);
 
 app.get("/health", async () => ({ ok: true }));
 
