@@ -2,7 +2,8 @@
 
 > AI-powered long-form story generation for content creators
 
-[Demo Video Coming Here]
+### Demo video
+[![Emberglow Story Factory](https://img.youtube.com/vi/Hej4nnmqpjE/maxresdefault.jpg)](https://www.youtube.com/watch?v=Hej4nnmqpjE)
 
 ## What is this?
 
