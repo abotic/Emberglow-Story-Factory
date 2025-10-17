@@ -2,9 +2,6 @@
 
 > AI-powered long-form story generation for content creators
 
-### Demo video
-[![Emberglow Story Factory](https://img.youtube.com/vi/Hej4nnmqpjE/maxresdefault.jpg)](https://www.youtube.com/watch?v=Hej4nnmqpjE)
-
 ## What is this?
 
 EmberGlow Story Factory is a full-stack application that generates complete story packages for YouTube and content creators. Give it a topic or seed idea, and it creates everything you need: a full script, viral titles, descriptions, hashtags, thumbnail concepts, and scene-by-scene visual prompts for AI image/video generation.
@@ -16,6 +13,13 @@ It's designed for creators who produce narrative content—paranormal encounters
 Creating long-form narrative content is time-consuming. You need a story script, packaging that drives clicks, and detailed visual direction for editors or AI tools. This usually takes hours of work per video.
 
 I wanted to automate the entire creative pipeline: from a simple seed idea to a complete, production-ready package. The result is a system that can generate 60+minute stories with hundreds of scene prompts in few minutes, while maintaining narrative quality and emotional depth.
+
+---
+
+## Demo video (click to start)
+[![Emberglow Story Factory](https://img.youtube.com/vi/Hej4nnmqpjE/maxresdefault.jpg)](https://www.youtube.com/watch?v=Hej4nnmqpjE)
+
+---
 
 ## Features
 
